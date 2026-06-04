@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANIME SCORE — アニメ評価アプリ</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Dots&family=Noto+Sans+JP:wght@300;400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131e;
+    --surface2: #1c1c2e;
+    --border: #2a2a45;
+    --accent: #ff3c6e;
+    --accent2: #7c3aed;
+    --accent3: #00d4ff;
+    --text: #e8e8f0;
+    --muted: #6e6e8a;
+    --gold: #f5c518;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(124,58,237,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,58,237,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.15em;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo span {
+    font-family: 'Zen Dots', monospace;
+    font-size: 0.75rem;
+    -webkit-text-fill-color: var(--muted);
+    color: var(--muted);
+    display: block;
+    letter-spacing: 0.3em;
+    margin-top: -4px;
+  }
+
+  /* Nav tabs */
+  .nav-tabs {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+  }
+
+  .nav-tabs button {
+    padding: 0.4rem 1.1rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-tabs button:hover { color: var(--text); border-color: var(--border); }
+  .nav-tabs button.active {
+    background: var(--accent2);
+    color: white;
+    border-color: var(--accent2);
+  }
+
+  /* Main layout */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* Pages */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Section title */
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.25rem;
+    color: var(--text);
+  }
+
+  .section-sub {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+    font-weight: 300;
+  }
+
+  /* === ADD FORM === */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 720px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  input[type=text], input[type=number], textarea, select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.65rem 0.9rem;
+    transition: border-color 0.2s;
+    outline: none;
+    width: 100%;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+  }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  select option { background: var(--surface2); }
+
+  /* Sliders */
+  .criteria-section {
+    margin-top: 1.5rem;
+  }
+
+  .criteria-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.1em;
+    color: var(--accent3);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .criteria-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .slider-label {
+    font-size: 0.8rem;
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .slider-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    color: var(--accent);
+    min-width: 2rem;
+    text-align: right;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--border);
+    outline: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(255,60,110,0.5);
+    transition: transform 0.15s;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  /* Total score display */
+  .total-preview {
+    margin-top: 1.5rem;
+    background: linear-gradient(135deg, rgba(255,60,110,0.1), rgba(124,58,237,0.1));
+    border: 1px solid rgba(255,60,110,0.3);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .total-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .total-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 0.7rem 1.8rem;
+    border-radius: 8px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    margin-top: 1.5rem;
+    width: 100%;
+    padding: 0.9rem;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255,60,110,0.3);
+  }
+
+  .btn-danger {
+    background: rgba(255,60,110,0.1);
+    border: 1px solid rgba(255,60,110,0.3);
+    color: var(--accent);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  .btn-danger:hover { background: rgba(255,60,110,0.2); }
+
+  .btn-edit {
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.3);
+    color: var(--accent3);
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  .btn-edit:hover { background: rgba(0,212,255,0.2); }
+
+  /* === LIST PAGE === */
+  .filter-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-bar input, .filter-bar select {
+    max-width: 200px;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .sort-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* Anime cards grid */
+  .anime-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .anime-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .anime-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .anime-card:hover { border-color: var(--accent2); transform: translateY(-3px); }
+  .anime-card:hover::before { transform: scaleX(1); }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.7rem;
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.3;
+    flex: 1;
+  }
+
+  .card-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    line-height: 1;
+    margin-left: 0.8rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.9rem;
+  }
+
+  .tag {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .tag.genre { border-color: rgba(124,58,237,0.4); color: #a78bfa; }
+  .tag.year { border-color: rgba(0,212,255,0.3); color: var(--accent3); }
+
+  /* Mini bar chart in card */
+  .mini-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 0.9rem;
+  }
+
+  .mini-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .mini-bar-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    width: 55px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .mini-bar-track {
+    flex: 1;
+    height: 5px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .mini-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent3));
+    transition: width 0.5s ease;
+  }
+
+  .mini-bar-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text);
+    width: 18px;
+    text-align: right;
+  }
+
+  .card-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 0.7rem;
+    margin-top: 0.5rem;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+    justify-content: flex-end;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+    color: var(--muted);
+  }
+
+  .empty-state .icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: block;
+    opacity: 0.4;
+  }
+
+  .empty-state p { font-size: 0.9rem; }
+
+  /* === RANKING PAGE === */
+  .ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 800px;
+  }
+
+  .rank-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    transition: all 0.2s;
+  }
+
+  .rank-item:hover { border-color: var(--border); transform: translateX(4px); }
+
+  .rank-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    line-height: 1;
+    min-width: 2.5rem;
+    text-align: center;
+  }
+
+  .rank-num.rank-1 { color: var(--gold); }
+  .rank-num.rank-2 { color: #c0c0c0; }
+  .rank-num.rank-3 { color: #cd7f32; }
+  .rank-num.rank-other { color: var(--muted); }
+
+  .rank-info { flex: 1; }
+  .rank-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; }
+
+  .rank-bars {
+    display: flex;
+    gap: 0.3rem;
+    align-items: flex-end;
+    height: 28px;
+  }
+
+  .rank-bar {
+    width: 18px;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(to top, var(--accent2), var(--accent3));
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+
+  .rank-bar:hover { opacity: 1; }
+
+  .rank-score-wrap { text-align: right; }
+
+  .rank-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .rank-score-max {
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  /* === RADAR / stats page === */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    max-width: 900px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+  }
+
+  .stat-card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  canvas { max-width: 100%; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--surface);
+    border: 1px solid var(--accent2);
+    border-radius: 10px;
+    padding: 0.8rem 1.3rem;
+    font-size: 0.85rem;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 700px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.show .modal { transform: scale(1); }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.05em;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .modal-close:hover { color: var(--text); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 640px) {
+    .form-grid, .criteria-grid, .stats-grid { grid-template-columns: 1fr; }
+    .anime-grid { grid-template-columns: 1fr; }
+    .nav-tabs button { padding: 0.4rem 0.7rem; font-size: 0.75rem; }
+    .cloud-sync { width: 100%; justify-content: flex-start; padding-bottom: 0.75rem; }
+    .cloud-sync input { max-width: 100%; flex: 1 1 180px; }
+  }
+
+  input[list] { cursor: pointer; }
+  input[list]::-webkit-calendar-picker-indicator { 
+    filter: invert(0.5); 
+    cursor: pointer;
+  }
+
+  /* Genre checkboxes */
+  .genre-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+  .genre-check input[type=checkbox] { display: none; }
+  .genre-check.checked {
+    background: rgba(124,58,237,0.2);
+    border-color: var(--accent2);
+    color: #a78bfa;
+  }
+  .genre-check:hover { border-color: var(--accent2); color: var(--text); }
+
+  /* Custom confirm dialog */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .confirm-overlay.show { opacity: 1; pointer-events: all; }
+  .confirm-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 360px;
+    width: 90%;
+    text-align: center;
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+  .confirm-overlay.show .confirm-box { transform: scale(1); }
+  .confirm-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .confirm-msg { font-size: 1rem; margin-bottom: 0.4rem; font-weight: 700; }
+  .confirm-sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; }
+  .confirm-btns { display: flex; gap: 0.75rem; justify-content: center; }
+  .btn-cancel {
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-cancel:hover { color: var(--text); border-color: var(--text); }
+  .btn-confirm-del {
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #ff3c6e, #c0134a);
+    color: white;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-confirm-del:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,60,110,0.4); }
+
+  /* Import button */
+  .btn-import {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1.2rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0,212,255,0.4);
+    background: rgba(0,212,255,0.08);
+    color: var(--accent3);
+    font-size: 0.85rem;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    align-self: flex-start;
+  }
+  .btn-import:hover {
+    background: rgba(0,212,255,0.15);
+    border-color: var(--accent3);
+    transform: translateY(-1px);
+  }
+
+  .cloud-sync {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    font-size: 0.78rem;
+  }
+
+  .cloud-sync input {
+    max-width: 190px;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.78rem;
+  }
+
+  .cloud-sync button {
+    padding: 0.45rem 0.7rem;
+    border-radius: 6px;
+    border: 1px solid rgba(0,212,255,0.35);
+    background: rgba(0,212,255,0.08);
+    color: var(--accent3);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .cloud-status {
+    color: var(--muted);
+    min-width: 5.5rem;
+    text-align: right;
+  }
+
+  /* Import result modal */
+  .import-result { margin-top: 1rem; font-size: 0.85rem; }
+  .import-ok { color: #4ade80; }
+  .import-skip { color: var(--muted); margin-top: 0.3rem; }
+
+  /* 番号バッジ */
+  .num-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.9rem;
+    color: var(--muted);
+    flex-shrink: 0;
+    padding: 0 0.3rem;
+  }
+
+  /* ビュー切り替えボタン */
+  .view-toggle {
+    display: flex;
+    gap: 0.3rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .view-toggle button {
+    width: 32px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .view-toggle button.active {
+    background: var(--accent2);
+    color: white;
+  }
+
+  /* リスト表示モード */
+  .anime-grid.list-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .anime-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    display: grid;
+    grid-template-columns: 2.2rem 1fr auto auto auto auto;
+    align-items: center;
+    gap: 0.8rem;
+    transition: all 0.18s;
+    cursor: default;
+  }
+  .anime-row:hover { border-color: var(--accent2); background: var(--surface2); }
+
+  .row-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .row-tags {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+
+  .row-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap;
+  }
+
+  .row-actions {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  /* カードモード時のnum-badge位置 */
+  .anime-card .num-badge {
+    position: absolute;
+    top: 0.8rem;
+    left: 0.8rem;
+  }
+  .anime-card { position: relative; padding-left: 3.2rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    ANIME SCORE
+    <span>アニメ総合評価システム</span>
+  </div>
+  <nav>
+    <ul class="nav-tabs">
+      <li><button class="active" onclick="showPage('list')">一覧</button></li>
+      <li><button onclick="showPage('add')">登録</button></li>
+      <li><button onclick="showPage('ranking')">ランキング</button></li>
+    </ul>
+  </nav>
+  <div class="cloud-sync">
+    <input type="email" id="cloud-email" placeholder="メールアドレス">
+    <button type="button" id="cloud-login-btn" onclick="cloudLogin()">ログイン</button>
+    <button type="button" id="cloud-sync-btn" onclick="cloudSyncNow()">同期</button>
+    <button type="button" id="cloud-logout-btn" onclick="cloudLogout()" style="display:none;">ログアウト</button>
+    <span class="cloud-status" id="cloud-status">ローカル保存</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- LIST PAGE -->
+  <div class="page active" id="page-list">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <h2 class="section-title">評価一覧</h2>
+        <p class="section-sub" id="list-count">0 作品登録済み</p>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <label class="btn-import" title="B列:タイトル / H列:概要 / I列:感想 / 3行目以降データ">
+          📥 CSVインポート
+          <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="importCSV(this)">
+        </label>
+        <button class="btn-import" style="border-color:rgba(245,197,24,0.4);color:#f5c518;background:rgba(245,197,24,0.08);" onclick="exportCSV()" title="登録データをCSVで書き出す">
+          📤 CSVエクスポート
+        </button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <input type="text" id="search-input" placeholder="🔍  タイトル検索..." style="max-width:220px;" oninput="renderList()">
+      <select id="genre-filter" onchange="renderList()">
+        <option value="">すべてのジャンル</option>
+        <option>アクション</option><option>ファンタジー</option>
+        <option>SF</option><option>ラブコメ</option>
+        <option>日常系</option><option>ホラー</option>
+        <option>スポーツ</option><option>その他</option>
+      </select>
+      <select id="sort-select" onchange="renderList()">
+        <option value="score-desc">総合スコア 高い順</option>
+        <option value="score-asc">総合スコア 低い順</option>
+        <option value="title">タイトル順</option>
+        <option value="year-desc">年 新しい順</option>
+        <option value="num-asc">登録番号順</option>
+      </select>
+      <div class="view-toggle" style="margin-left:auto;">
+        <button id="btn-view-card" class="active" title="カード表示" onclick="setView('card')">⊞</button>
+        <button id="btn-view-list" title="リスト表示" onclick="setView('list')">☰</button>
+      </div>
+    </div>
+
+    <div class="anime-grid" id="anime-grid">
+      <div class="empty-state" style="grid-column:1/-1">
+        <span class="icon">📺</span>
+        <p>まだ作品が登録されていません<br>「登録」タブからアニメを追加してください</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD PAGE -->
+  <div class="page" id="page-add">
+    <h2 class="section-title" id="form-page-title">新規登録</h2>
+    <p class="section-sub">アニメの情報と評価を入力してください</p>
+
+    <div class="form-card">
+      <input type="hidden" id="edit-id">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>タイトル *</label>
+          <input type="text" id="f-title" placeholder="例: 進撃の巨人">
+        </div>
+        <div class="form-group">
+          <label>放送年</label>
+          <input type="text" id="f-year" list="year-list" placeholder="例: 2023 または選択">
+        </div>
+        <div class="form-group">
+          <label>見た年</label>
+          <input type="text" id="f-watched-year" list="year-list" placeholder="例: 2024 または選択">
+        </div>
+        <datalist id="year-list"></datalist>
+        <div class="form-group full">
+          <label>ジャンル（複数選択可）</label>
+          <div id="genre-checkboxes" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.3rem;">
+            <label class="genre-check" data-genre="アクション"><input type="checkbox" value="アクション"> アクション</label>
+            <label class="genre-check" data-genre="ファンタジー"><input type="checkbox" value="ファンタジー"> ファンタジー</label>
+            <label class="genre-check" data-genre="SF"><input type="checkbox" value="SF"> SF</label>
+            <label class="genre-check" data-genre="ラブコメ"><input type="checkbox" value="ラブコメ"> ラブコメ</label>
+            <label class="genre-check" data-genre="日常系"><input type="checkbox" value="日常系"> 日常系</label>
+            <label class="genre-check" data-genre="ホラー"><input type="checkbox" value="ホラー"> ホラー</label>
+            <label class="genre-check" data-genre="スポーツ"><input type="checkbox" value="スポーツ"> スポーツ</label>
+            <label class="genre-check" data-genre="ミステリー"><input type="checkbox" value="ミステリー"> ミステリー</label>
+            <label class="genre-check" data-genre="恋愛"><input type="checkbox" value="恋愛"> 恋愛</label>
+            <label class="genre-check" data-genre="その他"><input type="checkbox" value="その他"> その他</label>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>概要・あらすじ</label>
+          <textarea id="f-synopsis" placeholder="作品の概要を入力..."></textarea>
+        </div>
+        <div class="form-group full">
+          <label>感想・コメント</label>
+          <textarea id="f-comment" placeholder="視聴後の感想を記録..."></textarea>
+        </div>
+      </div>
+
+      <div class="criteria-section">
+        <div class="criteria-title">📊 評価基準（合計100点）</div>
+        <div class="criteria-grid">
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">📖 ストーリー <span style="color:var(--muted);font-size:0.7rem;">/ 25</span></span>
+              <span class="slider-value" id="val-story">0</span>
+            </div>
+            <input type="range" id="sl-story" min="0" max="25" value="0" oninput="updateSlider('story')">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">👤 キャラクター <span style="color:var(--muted);font-size:0.7rem;">/ 25</span></span>
+              <span class="slider-value" id="val-chara">0</span>
+            </div>
+            <input type="range" id="sl-chara" min="0" max="25" value="0" oninput="updateSlider('chara')">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">🌍 独自性・伏線回収 <span style="color:var(--muted);font-size:0.7rem;">/ 15</span></span>
+              <span class="slider-value" id="val-world">0</span>
+            </div>
+            <input type="range" id="sl-world" min="0" max="15" value="0" oninput="updateSlider('world')">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">❤️ 感情移入度 <span style="color:var(--muted);font-size:0.7rem;">/ 15</span></span>
+              <span class="slider-value" id="val-emotion">0</span>
+            </div>
+            <input type="range" id="sl-emotion" min="0" max="15" value="0" oninput="updateSlider('emotion')">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">🎵 音楽 <span style="color:var(--muted);font-size:0.7rem;">/ 10</span></span>
+              <span class="slider-value" id="val-music">0</span>
+            </div>
+            <input type="range" id="sl-music" min="0" max="10" value="0" oninput="updateSlider('music')">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">🎨 映像 <span style="color:var(--muted);font-size:0.7rem;">/ 10</span></span>
+              <span class="slider-value" id="val-visual">0</span>
+            </div>
+            <input type="range" id="sl-visual" min="0" max="10" value="0" oninput="updateSlider('visual')">
+          </div>
+        </div>
+
+        <div class="total-preview">
+          <div>
+            <div class="total-label">合計スコア（100点満点）</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">ストーリー25 + キャラ25 + 独自性15 + 感情移入15 + 音楽10 + 映像10</div>
+          </div>
+          <div class="total-score" id="computed-score">0</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="submit-btn" onclick="submitAnime()">✓ 登録する</button>
+    </div>
+  </div>
+
+  <!-- RANKING PAGE -->
+  <div class="page" id="page-ranking">
+    <h2 class="section-title">ランキング</h2>
+    <p class="section-sub">総合スコア順</p>
+    <div class="ranking-list" id="ranking-list">
+      <div class="empty-state">
+        <span class="icon">🏆</span>
+        <p>作品を登録するとランキングが表示されます</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Edit Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">編集</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Custom Confirm Dialog -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-msg">この作品を削除しますか？</div>
+    <div class="confirm-sub" id="confirm-anime-title"></div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">キャンセル</button>
+      <button class="btn-confirm-del" id="confirm-del-btn">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span id="toast-msg">✓ 登録しました</span>
+</div>
+
+<script src="supabase-config.js"></script>
+<script>
+// === DATA ===
+let animes = JSON.parse(localStorage.getItem('animes') || '[]');
+let editingId = null; // null or number (Date.now())
+
+function populateYearList() {
+  const yearList = document.getElementById('year-list');
+  const latestYear = new Date().getFullYear() + 10;
+  const earliestYear = 1980;
+
+  yearList.innerHTML = '';
+  for (let year = latestYear; year >= earliestYear; year--) {
+    const option = document.createElement('option');
+    option.value = String(year);
+    yearList.appendChild(option);
+  }
+}
+
+const CLOUD_TABLE = 'anime_score_data';
+const SUPABASE_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const cloudState = {
+  client: null,
+  user: null,
+  ready: false,
+  loading: false,
+  saveTimer: null,
+  authListenerAttached: false,
+};
+
+function getCloudConfig() {
+  return window.SUPABASE_CONFIG || {};
+}
+
+function cloudConfigured() {
+  const config = getCloudConfig();
+  return Boolean(config.url && config.anonKey);
+}
+
+function setCloudStatus(message) {
+  const el = document.getElementById('cloud-status');
+  if (el) el.textContent = message;
+}
+
+function updateCloudUI() {
+  const loggedIn = Boolean(cloudState.user);
+  const email = document.getElementById('cloud-email');
+  const loginBtn = document.getElementById('cloud-login-btn');
+  const logoutBtn = document.getElementById('cloud-logout-btn');
+
+  if (email) {
+    email.style.display = loggedIn ? 'none' : '';
+    email.value = loggedIn ? '' : email.value;
+  }
+  if (loginBtn) loginBtn.style.display = loggedIn ? 'none' : '';
+  if (logoutBtn) logoutBtn.style.display = loggedIn ? '' : 'none';
+}
+
+async function ensureCloudClient() {
+  if (!cloudConfigured()) {
+    setCloudStatus('ローカル保存');
+    updateCloudUI();
+    return null;
+  }
+
+  if (!cloudState.client) {
+    const { createClient } = await import(SUPABASE_CDN);
+    const config = getCloudConfig();
+    cloudState.client = createClient(config.url, config.anonKey);
+  }
+
+  if (!cloudState.authListenerAttached) {
+    cloudState.authListenerAttached = true;
+    cloudState.client.auth.onAuthStateChange((_event, session) => {
+      cloudState.user = session ? session.user : null;
+      updateCloudUI();
+      if (cloudState.user) loadCloudData();
+      else setCloudStatus('ログイン待ち');
+    });
+  }
+
+  const { data } = await cloudState.client.auth.getSession();
+  cloudState.user = data.session ? data.session.user : null;
+  cloudState.ready = true;
+  updateCloudUI();
+  return cloudState.client;
+}
+
+async function initCloudSync() {
+  try {
+    const client = await ensureCloudClient();
+    if (!client) return;
+    if (cloudState.user) {
+      await loadCloudData();
+    } else {
+      setCloudStatus('ログイン待ち');
+    }
+  } catch (err) {
+    console.error(err);
+    setCloudStatus('同期エラー');
+  }
+}
+
+async function loadCloudData() {
+  if (!cloudState.client || !cloudState.user) return;
+  cloudState.loading = true;
+  setCloudStatus('読込中...');
+
+  const { data, error } = await cloudState.client
+    .from(CLOUD_TABLE)
+    .select('data, updated_at')
+    .eq('user_id', cloudState.user.id)
+    .limit(1);
+
+  cloudState.loading = false;
+  if (error) {
+    console.error(error);
+    setCloudStatus('読込エラー');
+    return;
+  }
+
+  if (data && data.length && Array.isArray(data[0].data)) {
+    animes = data[0].data;
+    localStorage.setItem('animes', JSON.stringify(animes));
+    renderList();
+    if (document.getElementById('page-ranking').classList.contains('active')) renderRanking();
+    setCloudStatus('同期済み');
+  } else {
+    setCloudStatus(animes.length ? '同期待ち' : 'クラウド空');
+  }
+}
+
+async function uploadCurrentData() {
+  if (!cloudState.client || !cloudState.user || cloudState.loading) return;
+
+  setCloudStatus('保存中...');
+  const { error } = await cloudState.client
+    .from(CLOUD_TABLE)
+    .upsert({
+      user_id: cloudState.user.id,
+      data: animes,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
+
+  if (error) {
+    console.error(error);
+    setCloudStatus('保存エラー');
+    return;
+  }
+
+  setCloudStatus('同期済み');
+}
+
+function queueCloudSave() {
+  if (!cloudState.ready || !cloudState.user || cloudState.loading) return;
+  clearTimeout(cloudState.saveTimer);
+  cloudState.saveTimer = setTimeout(uploadCurrentData, 700);
+}
+
+async function cloudLogin() {
+  const client = await ensureCloudClient();
+  if (!client) {
+    showToast('Supabase設定がまだありません');
+    return;
+  }
+
+  const email = document.getElementById('cloud-email').value.trim();
+  if (!email) {
+    showToast('メールアドレスを入力してください');
+    return;
+  }
+
+  const { error } = await client.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: location.href.split('#')[0] },
+  });
+
+  if (error) {
+    console.error(error);
+    showToast('ログインメールの送信に失敗しました');
+    return;
+  }
+
+  setCloudStatus('メール確認');
+  showToast('ログインメールを確認してください');
+}
+
+async function cloudLogout() {
+  if (cloudState.client) await cloudState.client.auth.signOut();
+  cloudState.user = null;
+  updateCloudUI();
+  setCloudStatus('ログアウト');
+}
+
+async function cloudSyncNow() {
+  const client = await ensureCloudClient();
+  if (!client) {
+    showToast('Supabase設定がまだありません');
+    return;
+  }
+  if (!cloudState.user) {
+    showToast('先にログインしてください');
+    return;
+  }
+  if (!confirm(`${animes.length}件の現在データをクラウドへ保存します。よろしいですか？`)) return;
+  await uploadCurrentData();
+  showToast('クラウドへ同期しました');
+}
+
+const CRITERIA = [
+  { key: 'story',   label: 'ストーリー',      max: 25 },
+  { key: 'chara',   label: 'キャラクター',     max: 25 },
+  { key: 'world',   label: '独自性・伏線回収', max: 15 },
+  { key: 'emotion', label: '感情移入度',       max: 15 },
+  { key: 'music',   label: '音楽',             max: 10 },
+  { key: 'visual',  label: '映像',             max: 10 },
+];
+
+function save() {
+  localStorage.setItem('animes', JSON.stringify(animes));
+  queueCloudSave();
+}
+
+function computeScore(a) {
+  // 各項目の合計がそのまま100点満点のスコア
+  return CRITERIA.reduce((s, c) => s + (a[c.key] || 0), 0);
+}
+
+// === GENRE HELPERS ===
+function getSelectedGenres() {
+  return [...document.querySelectorAll('#genre-checkboxes .genre-check.checked')]
+    .map(el => el.dataset.genre);
+}
+
+function setSelectedGenres(genres) {
+  document.querySelectorAll('#genre-checkboxes .genre-check').forEach(el => {
+    el.classList.toggle('checked', genres.includes(el.dataset.genre));
+  });
+}
+
+// Toggle on click - イベント委譲で確実に動作
+document.addEventListener('click', e => {
+  const el = e.target.closest('#genre-checkboxes .genre-check');
+  if (el) {
+    e.preventDefault();
+    el.classList.toggle('checked');
+  }
+});
+
+// === NAVIGATION ===
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-tabs button').forEach((b, i) => {
+    b.classList.toggle('active', ['list','add','ranking'][i] === id);
+  });
+  if (id === 'list') renderList();
+  if (id === 'ranking') renderRanking();
+  if (id === 'add') { resetForm(); }
+}
+
+// === FORM ===
+const sliders = ['story','chara','world','emotion','music','visual'];
+
+function updateSlider(key) {
+  const val = document.getElementById('sl-' + key).value;
+  document.getElementById('val-' + key).textContent = val;
+  updateComputedScore();
+}
+
+function updateComputedScore() {
+  const a = {};
+  sliders.forEach(k => a[k] = parseInt(document.getElementById('sl-' + k).value));
+  document.getElementById('computed-score').textContent = computeScore(a);
+}
+
+function resetForm() {
+  editingId = null;
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-year').value = '';
+  document.getElementById('f-watched-year').value = '';
+  document.getElementById('f-synopsis').value = '';
+  document.getElementById('f-comment').value = '';
+  setSelectedGenres([]);
+  sliders.forEach(k => {
+    document.getElementById('sl-' + k).value = 0;
+    document.getElementById('val-' + k).textContent = 0;
+  });
+  document.getElementById('computed-score').textContent = 0;
+  document.getElementById('form-page-title').textContent = '新規登録';
+  document.getElementById('submit-btn').textContent = '✓ 登録する';
+}
+
+function submitAnime() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { showToast('⚠ タイトルを入力してください'); return; }
+
+  const scores = {};
+  sliders.forEach(k => scores[k] = parseInt(document.getElementById('sl-' + k).value));
+
+  const genres = getSelectedGenres();
+
+  const anime = {
+    id: editingId !== null ? editingId : Date.now(),
+    title,
+    year: document.getElementById('f-year').value || '',
+    watchedYear: document.getElementById('f-watched-year').value || '',
+    genres,
+    synopsis: document.getElementById('f-synopsis').value,
+    comment: document.getElementById('f-comment').value,
+    ...scores,
+    score: computeScore(scores), // 各項目の合計 = 100点満点
+    date: new Date().toISOString(),
+  };
+
+  if (editingId !== null) {
+    // ③ 編集時は既存レコードを置き換え（追加しない）
+    const idx = animes.findIndex(a => a.id === editingId);
+    if (idx !== -1) {
+      animes[idx] = anime;
+    } else {
+      animes.push(anime); // フォールバック（念のため）
+    }
+    showToast('✓ 更新しました');
+  } else {
+    anime.num = animes.length + 1; // 登録順の一意番号
+    animes.push(anime);
+    showToast('✓ 登録しました');
+  }
+
+  save();
+  editingId = null;
+  showPage('list');
+}
+
+// === LIST ===
+let currentView = 'card'; // 'card' | 'list'
+
+function setView(v) {
+  currentView = v;
+  document.getElementById('btn-view-card').classList.toggle('active', v === 'card');
+  document.getElementById('btn-view-list').classList.toggle('active', v === 'list');
+  renderList();
+}
+
+function renderList() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const genreF = document.getElementById('genre-filter').value;
+  const sort = document.getElementById('sort-select').value;
+
+  let filtered = animes.filter(a => {
+    const matchSearch = !search || a.title.toLowerCase().includes(search);
+    const genres = a.genres || (a.genre ? [a.genre] : []);
+    const matchGenre = !genreF || genres.includes(genreF);
+    return matchSearch && matchGenre;
+  });
+
+  filtered.sort((a, b) => {
+    if (sort === 'score-desc') return b.score - a.score;
+    if (sort === 'score-asc') return a.score - b.score;
+    if (sort === 'title') return a.title.localeCompare(b.title, 'ja');
+    if (sort === 'year-desc') return (b.year || 0) - (a.year || 0);
+    if (sort === 'num-asc') return (a.num || 0) - (b.num || 0);
+    return 0;
+  });
+
+  document.getElementById('list-count').textContent = `${animes.length} 作品登録済み`;
+  const grid = document.getElementById('anime-grid');
+
+  if (filtered.length === 0) {
+    grid.className = 'anime-grid';
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><span class="icon">📺</span><p>${
+      animes.length === 0
+        ? 'まだ作品が登録されていません<br>「登録」タブからアニメを追加してください'
+        : '条件に一致する作品がありません'
+    }</p></div>`;
+    return;
+  }
+
+  if (currentView === 'list') {
+    grid.className = 'anime-grid list-mode';
+    grid.innerHTML = filtered.map(a => {
+      const genres = a.genres || (a.genre ? [a.genre] : []);
+      const genreTags = genres.slice(0,2).map(g => `<span class="tag genre" style="font-size:0.65rem;padding:0.15rem 0.5rem;">${escHtml(g)}</span>`).join('');
+      const yearTag = a.year ? `<span class="tag year" style="font-size:0.65rem;padding:0.15rem 0.5rem;">放送:${a.year}</span>` : '';
+      const watchedTag = a.watchedYear ? `<span class="tag" style="font-size:0.65rem;padding:0.15rem 0.5rem;border-color:rgba(0,212,255,0.3);color:var(--accent3);">視聴:${a.watchedYear}</span>` : '';
+      const numLabel = a.num ? `#${a.num}` : '—';
+      return `<div class="anime-row" data-id="${a.id}">
+        <span class="num-badge">${numLabel}</span>
+        <span class="row-title">${escHtml(a.title)}</span>
+        <div class="row-tags">${genreTags}${yearTag}${watchedTag}</div>
+
+        <span class="row-score">${a.score}</span>
+        <div class="row-actions">
+          <button class="btn btn-edit" onclick="startEdit(this)">編集</button>
+          <button class="btn btn-danger" onclick="confirmDelete(this)">削除</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    grid.className = 'anime-grid';
+    grid.innerHTML = filtered.map(a => {
+      const bars = CRITERIA.map(c => {
+        const v = a[c.key] || Math.ceil(c.max / 2);
+        return `<div class="mini-bar-row">
+          <span class="mini-bar-label">${c.label}</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${(v/c.max)*100}%"></div></div>
+          <span class="mini-bar-num">${v}</span>
+        </div>`;
+      }).join('');
+
+      const genres = a.genres || (a.genre ? [a.genre] : []);
+      const genreTags = genres.map(g => `<span class="tag genre">${escHtml(g)}</span>`).join('');
+      const yearTag = a.year ? `<span class="tag year">放送: ${a.year}</span>` : '';
+      const watchedTag = a.watchedYear ? `<span class="tag" style="border-color:rgba(0,212,255,0.3);color:var(--accent3);">視聴: ${a.watchedYear}</span>` : '';
+      const numLabel = a.num ? `#${a.num}` : '—';
+
+      return `<div class="anime-card" data-id="${a.id}">
+        <span class="num-badge">${numLabel}</span>
+        <div class="card-top">
+          <div class="card-title">${escHtml(a.title)}</div>
+          <div class="card-score">${a.score}</div>
+        </div>
+        <div class="card-meta">
+          ${genreTags}${yearTag}${watchedTag}
+  
+        </div>
+        <div class="mini-bars">${bars}</div>
+        ${a.comment ? `<div class="card-note">${escHtml(a.comment.slice(0,100))}${a.comment.length>100?'...':''}</div>` : ''}
+        <div class="card-actions">
+          <button class="btn btn-edit" onclick="startEdit(this)">編集</button>
+          <button class="btn btn-danger" onclick="confirmDelete(this)">削除</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ④ 削除：カードのdata-idからIDを取得（型安全）
+function confirmDelete(btn) {
+  const card = btn.closest('.anime-card, .anime-row');
+  const id = Number(card.dataset.id);
+  const a = animes.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('confirm-anime-title').textContent = `「${a.title}」を削除します`;
+  document.getElementById('confirm-del-btn').onclick = () => {
+    animes = animes.filter(x => x.id !== id);
+    save();
+    closeConfirm();
+    renderList();
+    showToast('🗑 削除しました');
+  };
+  document.getElementById('confirm-overlay').classList.add('show');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('show');
+}
+
+// ③ 編集：カードのdata-idからIDを取得
+function startEdit(btn) {
+  const card = btn.closest('.anime-card, .anime-row');
+  const id = Number(card.dataset.id);
+  const a = animes.find(x => x.id === id);
+  if (!a) return;
+
+  editingId = id;
+  // showPage('add')はresetFormを呼ぶので先にeditingIdをセット
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-add').classList.add('active');
+  document.querySelectorAll('.nav-tabs button').forEach((b, i) => {
+    b.classList.toggle('active', i === 1);
+  });
+
+  document.getElementById('form-page-title').textContent = '編集';
+  document.getElementById('submit-btn').textContent = '✓ 更新する';
+  document.getElementById('f-title').value = a.title;
+  document.getElementById('f-year').value = a.year || '';
+  document.getElementById('f-watched-year').value = a.watchedYear || '';
+  document.getElementById('f-synopsis').value = a.synopsis || '';
+  document.getElementById('f-comment').value = a.comment || '';
+
+  const genres = a.genres || (a.genre ? [a.genre] : []);
+  setSelectedGenres(genres);
+
+  sliders.forEach(k => {
+    const v = (a[k] !== undefined) ? a[k] : 0;
+    document.getElementById('sl-' + k).value = v;
+    document.getElementById('val-' + k).textContent = v;
+  });
+  updateComputedScore();
+}
+
+// === RANKING ===
+function renderRanking() {
+  const sorted = [...animes].sort((a, b) => b.score - a.score);
+  const el = document.getElementById('ranking-list');
+
+  if (sorted.length === 0) {
+    el.innerHTML = `<div class="empty-state"><span class="icon">🏆</span><p>作品を登録するとランキングが表示されます</p></div>`;
+    return;
+  }
+
+  el.innerHTML = sorted.map((a, i) => {
+    const rank = i + 1;
+    const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
+    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+    const barHtml = CRITERIA.map(c => {
+      const v = a[c.key] || Math.ceil(c.max/2);
+      const h = Math.round((v / c.max) * 24);
+      return `<div class="rank-bar" style="height:${h}px" title="${c.label}: ${v}"></div>`;
+    }).join('');
+
+    return `<div class="rank-item">
+      <div class="rank-num ${rankClass}">${medal}</div>
+      <div class="rank-info">
+        <div class="rank-title">${escHtml(a.title)}${a.year ? ` <span style="color:var(--muted);font-size:0.8rem;font-weight:300;">(${a.year})</span>` : ''}</div>
+        <div class="rank-bars">${barHtml}</div>
+      </div>
+      <div class="rank-score-wrap">
+        <div class="rank-score">${a.score}</div>
+        <div class="rank-score-max">/ 100</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// === MODAL ===
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+// === TOAST ===
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+// === CSV EXPORT ===
+function exportCSV() {
+  if (animes.length === 0) { showToast('⚠ エクスポートするデータがありません'); return; }
+
+  // ヘッダー行（スプレッドシートに合わせてB列=タイトル相当の並びで出力）
+  const headers = ['番号', 'タイトル', '放送年', '視聴年', 'ジャンル', '概要', '感想',
+    'ストーリー(/25)', 'キャラクター(/25)', '独自性・伏線回収(/15)', '感情移入度(/15)', '音楽(/10)', '映像(/10)', '合計スコア'];
+
+  const rows = [...animes].sort((a, b) => (a.num || 0) - (b.num || 0)).map(a => {
+    const genres = (a.genres || (a.genre ? [a.genre] : [])).join('・');
+    return [
+      a.num || '',
+      a.title,
+      a.year || '',
+      a.watchedYear || '',
+      genres,
+      a.synopsis || '',
+      a.comment || '',
+      a.story || 0,
+      a.chara || 0,
+      a.world || 0,
+      a.emotion || 0,
+      a.music || 0,
+      a.visual || 0,
+      a.score || 0,
+    ];
+  });
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(v => {
+      const s = String(v);
+      // ダブルクォートが必要な場合（カンマ・改行・ダブルクォートを含む）
+      if (s.includes(',') || s.includes('\n') || s.includes('"')) {
+        return '"' + s.split('"').join('""') + '"';
+      }
+      return s;
+    }).join(','))
+    .join('\n');
+
+  // BOM付きUTF-8でExcel/Googleスプレッドシートが文字化けしないようにする
+  const bom = '﻿';
+  const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  a.href = url;
+  a.download = `anime-score-export-${dateStr}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`✅ ${animes.length}件をエクスポートしました`);
+}
+
+// === CSV IMPORT ===
+// 列仕様: B列(index 1)=タイトル, H列(index 7)=概要, I列(index 8)=感想
+// 2行目がヘッダー → 3行目(index 2)以降をデータとして読む
+function importCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const rows = parseCSV(text);
+
+    // 3行目以降（index 2〜）をデータ行として処理
+    const dataRows = rows.slice(2);
+
+    let added = 0, skipped = 0, skippedTitles = [];
+
+    dataRows.forEach(cols => {
+      const title = (cols[1] || '').trim();   // B列
+      const synopsis = (cols[7] || '').trim(); // H列
+      const comment  = (cols[8] || '').trim(); // I列
+
+      if (!title) { skipped++; return; } // タイトルが空行はスキップ
+
+      // 同名タイトルが既に登録済みの場合はスキップ
+      if (animes.some(a => a.title === title)) {
+        skipped++;
+        skippedTitles.push(title);
+        return;
+      }
+
+      const def = { story:0, chara:0, world:0, emotion:0, music:0, visual:0 };
+      animes.push({
+        id: Date.now() + Math.random(),
+        num: animes.length + 1,
+        title,
+        year: '',
+        watchedYear: '',
+        genres: [],
+        synopsis,
+        comment,
+        ...def,
+        score: computeScore(def),
+        date: new Date().toISOString(),
+      });
+      added++;
+    });
+
+    save();
+    renderList();
+    input.value = ''; // リセット（同じファイルを再選択可能に）
+
+    // 結果トースト
+    let msg = `✅ ${added}件インポートしました`;
+    if (skipped > 0) msg += `（${skipped}件スキップ）`;
+    showToast(msg);
+
+    // スキップ詳細をコンソールに
+    if (skippedTitles.length) console.log('スキップ（重複）:', skippedTitles);
+  };
+  reader.onerror = () => showToast('⚠ ファイルの読み込みに失敗しました');
+  reader.readAsText(file, 'UTF-8');
+}
+
+// CSVパーサー（ダブルクォート・改行対応）
+function parseCSV(text) {
+  const rows = [];
+  // 改行コードを統一
+  text = text.split('\r\n').join('\n').split('\r').join('\n');
+  let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i+1] === '"') { field += '"'; i++; }
+        else { inQ = false; }
+      } else {
+        field += c;
+      }
+    } else {
+      if (c === '"') {
+        inQ = true;
+      } else if (c === ',') {
+        row.push(field); field = '';
+      } else if (c === '\n') {
+        row.push(field); field = '';
+        rows.push(row); row = [];
+      } else {
+        field += c;
+      }
+    }
+  }
+  row.push(field);
+  if (row.some(v => v !== '')) rows.push(row);
+  return rows;
+}
+
+// 公開版: このアプリのCSVエクスポートを点数込みで取り込めるようにする
+function importCSV(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const rows = parseCSV(e.target.result);
+    if (rows.length < 2) {
+      showToast('CSVにデータがありません');
+      input.value = '';
+      return;
+    }
+
+    const headers = rows[0].map(h => String(h).replace(/^\uFEFF/, '').trim());
+    const findIndex = (...names) => headers.findIndex(h => names.some(name => h.includes(name)));
+    const indexes = {
+      num: findIndex('番号'),
+      title: findIndex('タイトル'),
+      year: findIndex('放送年'),
+      watchedYear: findIndex('視聴年', '見た年'),
+      genres: findIndex('ジャンル'),
+      synopsis: findIndex('概要', 'あらすじ'),
+      comment: findIndex('感想', 'コメント'),
+      story: findIndex('ストーリー'),
+      chara: findIndex('キャラクター'),
+      world: findIndex('独自性'),
+      emotion: findIndex('感情'),
+      music: findIndex('音楽'),
+      visual: findIndex('映像'),
+      score: findIndex('合計', '総合'),
+    };
+
+    const valueAt = (cols, key, fallbackIndex = -1) => {
+      const idx = indexes[key] >= 0 ? indexes[key] : fallbackIndex;
+      return idx >= 0 ? (cols[idx] || '').trim() : '';
+    };
+    const toNumber = value => {
+      const num = Number(String(value || '').replace(/[^\d.-]/g, ''));
+      return Number.isFinite(num) ? num : 0;
+    };
+
+    let added = 0;
+    let skipped = 0;
+    rows.slice(1).forEach(cols => {
+      const title = valueAt(cols, 'title', 1);
+      if (!title) return;
+      if (animes.some(a => a.title === title)) {
+        skipped++;
+        return;
+      }
+
+      const genresText = valueAt(cols, 'genres', 4);
+      const scores = {
+        story: toNumber(valueAt(cols, 'story', 7)),
+        chara: toNumber(valueAt(cols, 'chara', 8)),
+        world: toNumber(valueAt(cols, 'world', 9)),
+        emotion: toNumber(valueAt(cols, 'emotion', 10)),
+        music: toNumber(valueAt(cols, 'music', 11)),
+        visual: toNumber(valueAt(cols, 'visual', 12)),
+      };
+
+      animes.push({
+        id: Date.now() + Math.random(),
+        num: toNumber(valueAt(cols, 'num', 0)) || animes.length + 1,
+        title,
+        year: valueAt(cols, 'year', 2),
+        watchedYear: valueAt(cols, 'watchedYear', 3),
+        genres: genresText ? genresText.split(/[・,、/]/).map(g => g.trim()).filter(Boolean) : [],
+        synopsis: valueAt(cols, 'synopsis', 5),
+        comment: valueAt(cols, 'comment', 6),
+        ...scores,
+        score: toNumber(valueAt(cols, 'score', 13)) || computeScore(scores),
+        date: new Date().toISOString(),
+      });
+      added++;
+    });
+
+    save();
+    renderList();
+    input.value = '';
+    showToast(`CSVから${added}件取り込みました${skipped ? `（${skipped}件スキップ）` : ''}`);
+  };
+  reader.onerror = () => showToast('CSVの読み込みに失敗しました');
+  reader.readAsText(file, 'UTF-8');
+}
+
+// Init
+populateYearList();
+initCloudSync();
+renderList();
+</script>
+</body>
+</html>
