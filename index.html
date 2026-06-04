@@ -945,6 +945,350 @@
     left: 0.8rem;
   }
   .anime-card { position: relative; padding-left: 3.2rem; }
+
+  @media (max-width: 700px) {
+    body {
+      min-width: 0;
+    }
+
+    body::before {
+      background-size: 28px 28px;
+    }
+
+    header {
+      position: sticky;
+      height: auto;
+      min-height: 0;
+      padding: 0.75rem 0.85rem;
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: stretch;
+      gap: 0.7rem;
+    }
+
+    .logo {
+      font-size: 1.55rem;
+      letter-spacing: 0.08em;
+      line-height: 0.95;
+    }
+
+    .logo span {
+      display: none;
+    }
+
+    nav {
+      width: 100%;
+    }
+
+    .nav-tabs {
+      width: 100%;
+      gap: 0.35rem;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .nav-tabs li {
+      min-width: 0;
+    }
+
+    .nav-tabs button {
+      width: 100%;
+      min-height: 40px;
+      padding: 0.45rem 0.2rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cloud-sync {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      justify-content: stretch;
+      gap: 0.45rem;
+      padding-bottom: 0;
+    }
+
+    .cloud-sync input {
+      max-width: none;
+      min-width: 0;
+      width: 100%;
+      min-height: 40px;
+      font-size: 0.85rem;
+    }
+
+    .cloud-sync button {
+      min-height: 40px;
+      padding: 0.45rem 0.65rem;
+      white-space: nowrap;
+    }
+
+    .cloud-status {
+      grid-column: 1 / -1;
+      min-width: 0;
+      text-align: left;
+      font-size: 0.75rem;
+    }
+
+    main {
+      width: 100%;
+      padding: 1rem 0.85rem 5rem;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: 0.06em;
+    }
+
+    .section-sub {
+      margin-bottom: 1rem;
+    }
+
+    .filter-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+      margin-bottom: 1rem;
+    }
+
+    .filter-bar input,
+    .filter-bar select {
+      max-width: none !important;
+      width: 100%;
+      min-width: 0;
+      min-height: 40px;
+      font-size: 0.82rem;
+    }
+
+    .filter-bar input {
+      grid-column: 1 / -1;
+    }
+
+    .view-toggle {
+      grid-column: 1 / -1;
+      width: 100%;
+      margin-left: 0 !important;
+    }
+
+    .view-toggle button {
+      width: 50%;
+      min-height: 36px;
+    }
+
+    .btn-import {
+      flex: 1 1 135px;
+      justify-content: center;
+      min-height: 40px;
+      padding: 0.55rem 0.7rem;
+      font-size: 0.78rem;
+    }
+
+    .anime-grid {
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
+    }
+
+    .anime-card {
+      border-radius: 10px;
+      padding: 1rem 1rem 1rem 2.9rem;
+    }
+
+    .card-top {
+      gap: 0.65rem;
+      align-items: flex-start;
+    }
+
+    .card-title {
+      min-width: 0;
+      font-size: 0.98rem;
+      overflow-wrap: anywhere;
+    }
+
+    .card-score {
+      flex-shrink: 0;
+      margin-left: 0;
+      font-size: 2rem;
+    }
+
+    .mini-bar-label {
+      width: 4.4rem;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .card-actions {
+      justify-content: stretch;
+    }
+
+    .card-actions .btn,
+    .row-actions .btn {
+      flex: 1;
+      min-height: 36px;
+    }
+
+    .anime-grid.list-mode {
+      gap: 0.65rem;
+    }
+
+    .anime-row {
+      grid-template-columns: 2.1rem 1fr auto;
+      grid-template-areas:
+        "num title score"
+        "tags tags tags"
+        "actions actions actions";
+      gap: 0.55rem;
+      padding: 0.8rem;
+      border-radius: 10px;
+    }
+
+    .anime-row .num-badge {
+      grid-area: num;
+    }
+
+    .row-title {
+      grid-area: title;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.35;
+    }
+
+    .row-tags {
+      grid-area: tags;
+      flex-wrap: wrap;
+      overflow: visible;
+    }
+
+    .row-score {
+      grid-area: score;
+    }
+
+    .row-actions {
+      grid-area: actions;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .form-card {
+      max-width: none;
+      padding: 1rem;
+      border-radius: 10px;
+    }
+
+    .form-grid,
+    .criteria-grid,
+    .stats-grid {
+      grid-template-columns: 1fr;
+      gap: 0.9rem;
+    }
+
+    input[type=text],
+    input[type=number],
+    textarea,
+    select {
+      min-height: 42px;
+      font-size: 16px;
+    }
+
+    .genre-check {
+      flex: 1 1 calc(50% - 0.5rem);
+      justify-content: center;
+      min-height: 38px;
+      padding: 0.35rem 0.5rem;
+      text-align: center;
+    }
+
+    .slider-group {
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(28,28,46,0.55);
+    }
+
+    input[type=range] {
+      height: 8px;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      width: 24px;
+      height: 24px;
+    }
+
+    .total-preview {
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 1rem;
+    }
+
+    .total-preview > div:first-child {
+      min-width: 0;
+    }
+
+    .total-score {
+      font-size: 2.6rem;
+      flex-shrink: 0;
+    }
+
+    .btn-primary {
+      min-height: 48px;
+      font-size: 1rem;
+    }
+
+    .ranking-list {
+      max-width: none;
+      gap: 0.65rem;
+    }
+
+    .rank-item {
+      gap: 0.75rem;
+      padding: 0.85rem;
+      border-radius: 10px;
+      align-items: flex-start;
+    }
+
+    .rank-num {
+      min-width: 2rem;
+      font-size: 1.55rem;
+    }
+
+    .rank-title {
+      overflow-wrap: anywhere;
+      line-height: 1.35;
+    }
+
+    .rank-bars {
+      gap: 0.2rem;
+    }
+
+    .rank-bar {
+      width: 12px;
+    }
+
+    .rank-score {
+      font-size: 2rem;
+    }
+
+    .modal,
+    .confirm-box {
+      width: calc(100vw - 1.5rem);
+      padding: 1.1rem;
+      border-radius: 10px;
+    }
+
+    .toast {
+      left: 0.85rem;
+      right: 0.85rem;
+      bottom: 1rem;
+      justify-content: center;
+    }
+  }
 </style>
 </head>
 <body>
