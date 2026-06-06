@@ -668,6 +668,123 @@
     letter-spacing: 0.05em;
   }
 
+  .detail-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .detail-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .detail-section {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .detail-section h3 {
+    font-size: 0.78rem;
+    color: var(--accent3);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.55rem;
+  }
+
+  .detail-section p {
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+  }
+
+  .detail-score-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .detail-score-item {
+    background: rgba(10,10,15,0.35);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem;
+  }
+
+  .detail-score-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .detail-score-name {
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .detail-score-value {
+    font-family: 'Bebas Neue', sans-serif;
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+
+  .detail-score-track {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .detail-score-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent2), var(--accent3));
+  }
+
+  .detail-nav {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.65rem;
+    align-items: center;
+  }
+
+  .detail-nav button,
+  .detail-action {
+    min-height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .detail-nav button:hover,
+  .detail-action:hover {
+    border-color: var(--accent2);
+  }
+
+  .detail-position {
+    color: var(--muted);
+    font-size: 0.8rem;
+    min-width: 4rem;
+    text-align: center;
+  }
+
+  .detail-hint {
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
   .modal-close {
     background: none;
     border: none;
@@ -945,6 +1062,7 @@
     left: 0.8rem;
   }
   .anime-card { position: relative; padding-left: 3.2rem; }
+  .anime-card, .anime-row { cursor: pointer; }
 
   @media (max-width: 700px) {
     body {
@@ -1174,6 +1292,38 @@
       width: 100%;
       display: grid;
       grid-template-columns: 1fr 1fr;
+    }
+
+    .modal {
+      width: min(94vw, 700px);
+      max-height: 88vh;
+      padding: 1.1rem;
+      border-radius: 12px;
+    }
+
+    .modal-header {
+      gap: 0.8rem;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .modal-title {
+      min-width: 0;
+      font-size: 1.2rem;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .detail-score-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .detail-nav {
+      grid-template-columns: 1fr;
+    }
+
+    .detail-hint {
+      display: block;
     }
 
     .form-card {
@@ -1518,6 +1668,11 @@
 // === DATA ===
 let animes = JSON.parse(localStorage.getItem('animes') || '[]');
 let editingId = null; // null or number (Date.now())
+let currentRenderedIds = [];
+let detailIds = [];
+let detailIndex = 0;
+let detailTouchStartX = null;
+let detailTouchStartY = null;
 
 function populateYearList() {
   const yearList = document.getElementById('year-list');
@@ -1879,6 +2034,8 @@ function renderList() {
     return 0;
   });
 
+  currentRenderedIds = filtered.map(a => a.id);
+
   document.getElementById('list-count').textContent = `${animes.length} 作品登録済み`;
   const grid = document.getElementById('anime-grid');
 
@@ -1900,7 +2057,7 @@ function renderList() {
       const yearTag = a.year ? `<span class="tag year" style="font-size:0.65rem;padding:0.15rem 0.5rem;">放送:${a.year}</span>` : '';
       const watchedTag = a.watchedYear ? `<span class="tag" style="font-size:0.65rem;padding:0.15rem 0.5rem;border-color:rgba(0,212,255,0.3);color:var(--accent3);">視聴:${a.watchedYear}</span>` : '';
       const numLabel = a.num ? `#${a.num}` : '—';
-      return `<div class="anime-row" data-id="${a.id}">
+      return `<div class="anime-row" data-id="${a.id}" onclick="if(event.target.closest('button')) return; openDetailById(${a.id})">
         <span class="num-badge">${numLabel}</span>
         <span class="row-title">${escHtml(a.title)}</span>
         <div class="row-tags">${genreTags}${yearTag}${watchedTag}</div>
@@ -1930,7 +2087,7 @@ function renderList() {
       const watchedTag = a.watchedYear ? `<span class="tag" style="border-color:rgba(0,212,255,0.3);color:var(--accent3);">視聴: ${a.watchedYear}</span>` : '';
       const numLabel = a.num ? `#${a.num}` : '—';
 
-      return `<div class="anime-card" data-id="${a.id}">
+      return `<div class="anime-card" data-id="${a.id}" onclick="if(event.target.closest('button')) return; openDetailById(${a.id})">
         <span class="num-badge">${numLabel}</span>
         <div class="card-top">
           <div class="card-title">${escHtml(a.title)}</div>
@@ -1968,11 +2125,143 @@ function confirmDelete(btn) {
   document.getElementById('confirm-overlay').classList.add('show');
 }
 
+function openDetailById(id) {
+  detailIds = currentRenderedIds.length ? [...currentRenderedIds] : animes.map(a => a.id);
+  detailIndex = detailIds.indexOf(id);
+  if (detailIndex < 0) detailIndex = 0;
+  renderDetail();
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function getDetailAnime() {
+  return animes.find(a => a.id === detailIds[detailIndex]);
+}
+
+function renderDetail() {
+  const a = getDetailAnime();
+  if (!a) {
+    closeModal();
+    return;
+  }
+
+  const genres = a.genres || (a.genre ? [a.genre] : []);
+  const tags = [
+    ...genres.map(g => `<span class="tag genre">${escHtml(g)}</span>`),
+    a.year ? `<span class="tag year">放送 ${escHtml(a.year)}</span>` : '',
+    a.watchedYear ? `<span class="tag" style="border-color:rgba(0,212,255,0.3);color:var(--accent3);">視聴 ${escHtml(a.watchedYear)}</span>` : '',
+  ].filter(Boolean).join('');
+  const scoreRows = CRITERIA.map(c => {
+    const value = Number(a[c.key] || 0);
+    const pct = c.max ? Math.max(0, Math.min(100, (value / c.max) * 100)) : 0;
+    return `<div class="detail-score-item">
+      <div class="detail-score-head">
+        <span class="detail-score-name">${c.label}</span>
+        <span class="detail-score-value">${value} / ${c.max}</span>
+      </div>
+      <div class="detail-score-track"><div class="detail-score-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+  const total = Number(a.score || 0);
+  const position = `${detailIndex + 1} / ${detailIds.length}`;
+
+  document.getElementById('modal-title').textContent = a.num ? `#${a.num} ${a.title}` : a.title;
+  document.getElementById('modal-body').innerHTML = `<div class="detail-modal-body">
+    <div class="detail-meta">${tags || '<span class="tag">未分類</span>'}</div>
+    <div class="detail-section">
+      <h3>概要</h3>
+      <p>${a.synopsis ? escHtml(a.synopsis) : '未入力'}</p>
+    </div>
+    <div class="detail-section">
+      <h3>感想</h3>
+      <p>${a.comment ? escHtml(a.comment) : '未入力'}</p>
+    </div>
+    <div class="detail-section">
+      <h3>評価 <span class="card-score" style="font-size:2rem;margin-left:0.4rem;">${total}</span></h3>
+      <div class="detail-score-grid">${scoreRows}</div>
+    </div>
+    <div class="detail-nav">
+      <button type="button" onclick="showDetailOffset(-1)">← 前へ</button>
+      <div class="detail-position">${position}</div>
+      <button type="button" onclick="showDetailOffset(1)">次へ →</button>
+    </div>
+    <button type="button" class="btn btn-edit detail-action" onclick="editDetailAnime()">編集する</button>
+    <div class="detail-hint">左右にスワイプして前後の作品を表示できます</div>
+  </div>`;
+}
+
+function showDetailOffset(delta) {
+  if (!detailIds.length) return;
+  detailIndex = (detailIndex + delta + detailIds.length) % detailIds.length;
+  renderDetail();
+}
+
+function editDetailAnime() {
+  const a = getDetailAnime();
+  if (!a) return;
+  closeModal();
+  openEditById(a.id);
+}
+
+function setupDetailGestures() {
+  const modal = document.getElementById('modal-overlay');
+  modal.addEventListener('touchstart', e => {
+    const touch = e.changedTouches[0];
+    detailTouchStartX = touch.clientX;
+    detailTouchStartY = touch.clientY;
+  }, { passive: true });
+  modal.addEventListener('touchend', e => {
+    if (detailTouchStartX === null || detailTouchStartY === null || !modal.classList.contains('show')) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - detailTouchStartX;
+    const dy = touch.clientY - detailTouchStartY;
+    detailTouchStartX = null;
+    detailTouchStartY = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    showDetailOffset(dx < 0 ? 1 : -1);
+  }, { passive: true });
+  document.addEventListener('keydown', e => {
+    if (!modal.classList.contains('show')) return;
+    if (e.key === 'ArrowLeft') showDetailOffset(-1);
+    if (e.key === 'ArrowRight') showDetailOffset(1);
+    if (e.key === 'Escape') closeModal();
+  });
+}
+
 function closeConfirm() {
   document.getElementById('confirm-overlay').classList.remove('show');
 }
 
 // ③ 編集：カードのdata-idからIDを取得
+function openEditById(id) {
+  const a = animes.find(x => x.id === id);
+  if (!a) return;
+
+  editingId = id;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-add').classList.add('active');
+  document.querySelectorAll('.nav-tabs button').forEach((b, i) => {
+    b.classList.toggle('active', i === 1);
+  });
+
+  document.getElementById('form-page-title').textContent = '編集';
+  document.getElementById('submit-btn').textContent = '更新する';
+  document.getElementById('f-title').value = a.title;
+  document.getElementById('f-year').value = a.year || '';
+  document.getElementById('f-watched-year').value = a.watchedYear || '';
+  document.getElementById('f-synopsis').value = a.synopsis || '';
+  document.getElementById('f-comment').value = a.comment || '';
+
+  const genres = a.genres || (a.genre ? [a.genre] : []);
+  setSelectedGenres(genres);
+
+  sliders.forEach(k => {
+    const v = (a[k] !== undefined) ? a[k] : 0;
+    document.getElementById('sl-' + k).value = v;
+    document.getElementById('val-' + k).textContent = v;
+  });
+  updateComputedScore();
+}
+
 function startEdit(btn) {
   const card = btn.closest('.anime-card, .anime-row');
   const id = Number(card.dataset.id);
@@ -2297,6 +2586,7 @@ function importCSV(input) {
 // Init
 populateYearList();
 initCloudSync();
+setupDetailGestures();
 renderList();
 </script>
 </body>
