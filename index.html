@@ -17,6 +17,7 @@
     --text: #e8e8f0;
     --muted: #6e6e8a;
     --gold: #f5c518;
+    --sticky-top: 64px;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -332,18 +333,60 @@
   .btn-edit:hover { background: rgba(0,212,255,0.2); }
 
   /* === LIST PAGE === */
-  .filter-bar {
+  .list-toolbar {
+    position: sticky;
+    top: var(--sticky-top);
+    z-index: 80;
+    margin: -0.2rem 0 1.2rem;
+    padding: 0.85rem 0 0.95rem;
+    background: linear-gradient(180deg, rgba(10,10,15,0.96), rgba(10,10,15,0.9));
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(42,42,69,0.75);
+  }
+
+  .list-toolbar-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .list-toolbar-title {
+    min-width: 0;
+  }
+
+  .list-toolbar .section-title {
+    font-size: 1.75rem;
+    line-height: 1;
+    margin-bottom: 0.15rem;
+  }
+
+  .list-toolbar .section-sub {
+    margin-bottom: 0;
+    font-size: 0.78rem;
+  }
+
+  .list-actions {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 0.45rem;
     flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .filter-bar {
+    display: grid;
+    grid-template-columns: minmax(180px, 1.2fr) minmax(150px, 0.9fr) minmax(170px, 1fr) auto;
+    gap: 0.55rem;
+    margin-bottom: 0;
     align-items: center;
   }
 
   .filter-bar input, .filter-bar select {
-    max-width: 200px;
-    padding: 0.5rem 0.8rem;
-    font-size: 0.85rem;
+    max-width: none;
+    min-height: 36px;
+    padding: 0.42rem 0.65rem;
+    font-size: 0.8rem;
   }
 
   .sort-label {
@@ -1166,11 +1209,38 @@
       margin-bottom: 1rem;
     }
 
+    .list-toolbar {
+      margin: -0.35rem -0.85rem 1rem;
+      padding: 0.65rem 0.85rem 0.75rem;
+    }
+
+    .list-toolbar-head {
+      grid-template-columns: 1fr;
+      gap: 0.55rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .list-toolbar .section-title {
+      font-size: 1.35rem;
+      letter-spacing: 0.06em;
+    }
+
+    .list-toolbar .section-sub {
+      font-size: 0.72rem;
+      margin-bottom: 0;
+    }
+
+    .list-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem;
+    }
+
     .filter-bar {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.55rem;
-      margin-bottom: 1rem;
+      gap: 0.45rem;
+      margin-bottom: 0;
     }
 
     .filter-bar input,
@@ -1178,8 +1248,9 @@
       max-width: none !important;
       width: 100%;
       min-width: 0;
-      min-height: 40px;
-      font-size: 0.82rem;
+      min-height: 34px;
+      padding: 0.36rem 0.55rem;
+      font-size: 0.76rem;
     }
 
     .filter-bar input {
@@ -1194,15 +1265,18 @@
 
     .view-toggle button {
       width: 50%;
-      min-height: 36px;
+      min-height: 32px;
     }
 
     .btn-import {
-      flex: 1 1 135px;
+      width: 100%;
+      min-width: 0;
       justify-content: center;
-      min-height: 40px;
-      padding: 0.55rem 0.7rem;
-      font-size: 0.78rem;
+      min-height: 34px;
+      padding: 0.42rem 0.55rem;
+      font-size: 0.72rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .anime-grid {
@@ -1468,24 +1542,25 @@
 
   <!-- LIST PAGE -->
   <div class="page active" id="page-list">
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
-      <div>
+    <div class="list-toolbar">
+      <div class="list-toolbar-head">
+      <div class="list-toolbar-title">
         <h2 class="section-title">評価一覧</h2>
         <p class="section-sub" id="list-count">0 作品登録済み</p>
       </div>
-      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+      <div class="list-actions">
         <label class="btn-import" title="B列:タイトル / H列:概要 / I列:感想 / 3行目以降データ">
-          📥 CSVインポート
+          📥 CSV入力
           <input type="file" id="csv-file-input" accept=".csv" style="display:none;" onchange="importCSV(this)">
         </label>
         <button class="btn-import" style="border-color:rgba(245,197,24,0.4);color:#f5c518;background:rgba(245,197,24,0.08);" onclick="exportCSV()" title="登録データをCSVで書き出す">
-          📤 CSVエクスポート
+          📤 CSV出力
         </button>
       </div>
     </div>
 
     <div class="filter-bar">
-      <input type="text" id="search-input" placeholder="🔍  タイトル検索..." style="max-width:220px;" oninput="renderList()">
+      <input type="text" id="search-input" placeholder="🔍  タイトル検索..." oninput="renderList()">
       <select id="genre-filter" onchange="renderList()">
         <option value="">すべてのジャンル</option>
         <option>アクション</option><option>ファンタジー</option>
@@ -1500,10 +1575,12 @@
         <option value="year-desc">年 新しい順</option>
         <option value="num-asc">登録番号順</option>
       </select>
-      <div class="view-toggle" style="margin-left:auto;">
+      <div class="view-toggle">
         <button id="btn-view-card" class="active" title="カード表示" onclick="setView('card')">⊞</button>
         <button id="btn-view-list" title="リスト表示" onclick="setView('list')">☰</button>
       </div>
+    </div>
+
     </div>
 
     <div class="anime-grid" id="anime-grid">
@@ -1724,6 +1801,13 @@ function updateCloudUI() {
   }
   if (loginBtn) loginBtn.style.display = loggedIn ? 'none' : '';
   if (logoutBtn) logoutBtn.style.display = loggedIn ? '' : 'none';
+  updateStickyOffset();
+}
+
+function updateStickyOffset() {
+  const header = document.querySelector('header');
+  if (!header) return;
+  document.documentElement.style.setProperty('--sticky-top', `${Math.ceil(header.getBoundingClientRect().height)}px`);
 }
 
 async function ensureCloudClient() {
@@ -1924,6 +2008,7 @@ function showPage(id) {
   document.querySelectorAll('.nav-tabs button').forEach((b, i) => {
     b.classList.toggle('active', ['list','add','ranking'][i] === id);
   });
+  updateStickyOffset();
   if (id === 'list') renderList();
   if (id === 'ranking') renderRanking();
   if (id === 'add') { resetForm(); }
@@ -2587,6 +2672,8 @@ function importCSV(input) {
 populateYearList();
 initCloudSync();
 setupDetailGestures();
+updateStickyOffset();
+window.addEventListener('resize', updateStickyOffset);
 renderList();
 </script>
 </body>
