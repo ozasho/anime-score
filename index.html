@@ -376,7 +376,7 @@
 
   .filter-bar {
     display: grid;
-    grid-template-columns: minmax(180px, 1.2fr) minmax(150px, 0.9fr) minmax(170px, 1fr) auto;
+    grid-template-columns: minmax(180px, 1.2fr) minmax(140px, 0.85fr) minmax(120px, 0.7fr) minmax(170px, 1fr) auto;
     gap: 0.55rem;
     margin-bottom: 0;
     align-items: center;
@@ -1281,20 +1281,27 @@
       grid-row: 2;
     }
 
-    #sort-select {
+    #rating-filter {
       grid-column: 2;
       grid-row: 2;
     }
 
-    .view-toggle {
+    #sort-select {
       grid-column: 1 / -1;
       grid-row: 3;
+    }
+
+    .view-toggle {
+      grid-column: 1 / -1;
+      grid-row: 4;
       width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       margin-left: 0 !important;
     }
 
     .view-toggle button {
-      width: 50%;
+      width: 100%;
       min-height: 28px;
     }
 
@@ -1598,6 +1605,11 @@
         <option>SF</option><option>ラブコメ</option>
         <option>日常系</option><option>ホラー</option>
         <option>スポーツ</option><option>その他</option>
+      </select>
+      <select id="rating-filter" onchange="renderList()">
+        <option value="">すべての評価状態</option>
+        <option value="unrated">未評価のみ</option>
+        <option value="rated">評価済みのみ</option>
       </select>
       <select id="sort-select" onchange="renderList()">
         <option value="score-desc">総合スコア 高い順</option>
@@ -2129,16 +2141,24 @@ function setView(v) {
   renderList();
 }
 
+function isUnratedAnime(a) {
+  const score = Number(a.score || 0);
+  return score === 0 && sliders.every(k => Number(a[k] || 0) === 0);
+}
+
 function renderList() {
   const search = document.getElementById('search-input').value.toLowerCase();
   const genreF = document.getElementById('genre-filter').value;
+  const ratingF = document.getElementById('rating-filter').value;
   const sort = document.getElementById('sort-select').value;
 
   let filtered = animes.filter(a => {
     const matchSearch = !search || a.title.toLowerCase().includes(search);
     const genres = a.genres || (a.genre ? [a.genre] : []);
     const matchGenre = !genreF || genres.includes(genreF);
-    return matchSearch && matchGenre;
+    const unrated = isUnratedAnime(a);
+    const matchRating = !ratingF || (ratingF === 'unrated' ? unrated : !unrated);
+    return matchSearch && matchGenre && matchRating;
   });
 
   filtered.sort((a, b) => {
