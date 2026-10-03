@@ -4,8 +4,6 @@
 -- Sources checked on 2026-10-03:
 -- https://anime-jaadugar.com/sample-page/
 -- https://yanisuu.com/
--- https://denkimokuroku.jp/
--- https://www.aniplex.co.jp/lineup/uchioto/
 -- https://www.liargame-anime.com/
 
 with database_state as (
@@ -45,24 +43,6 @@ incoming(ord, title, aliases, year, watched_year, genres, synopsis) as (
     ),
     (
       3,
-      '二十世紀電氣目録-ユーレカ・エヴリカ-',
-      '["二十世紀電氣目録-ユーレカ・エヴリカ-", "二十世紀電氣目録", "20世紀電気目録", "20世紀電氣目録"]'::jsonb,
-      '2026',
-      '2026',
-      '["ファンタジー", "SF", "恋愛"]'::jsonb,
-      '蒸気機関だけが発達し、煙に覆われた20世紀初頭の京都。電氣の時代を夢見る坂本喜八は、戦争で失われたはずの発明帳「二十世紀電氣目録」と酒造の娘・百川稲子に出会い、目録を狙う蒸気財閥の御曹司に対抗して、未来を切り開く電氣の挑戦を始める。'
-    ),
-    (
-      4,
-      'うちの弟どもがすみません',
-      '["うちの弟どもがすみません"]'::jsonb,
-      '2026',
-      '2026',
-      '["ラブコメ", "日常系", "恋愛"]'::jsonb,
-      '母の再婚をきっかけに引っ越した女子高生・糸を待っていたのは、個性豊かな4人の弟たちとの新生活。新米の姉として家事や家族づくりに奮闘する一方、無愛想だが家族思いの長男・源とはなかなか打ち解けられず、にぎやかな同居生活が始まる。'
-    ),
-    (
-      5,
       'LIAR GAME',
       '["LIAR GAME", "ライアーゲーム", "Liar Game"]'::jsonb,
       '2026',
