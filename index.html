@@ -1000,6 +1000,16 @@
     text-align: right;
   }
 
+  .cloud-sync button:disabled { opacity: 0.6; cursor: wait; }
+  .cloud-login-feedback {
+    flex-basis: 100%;
+    margin: 0;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+    color: var(--accent3);
+  }
+  .cloud-login-feedback[data-error="true"] { color: #fca5a5; }
+
   /* Import result modal */
   .import-result { margin-top: 1rem; font-size: 0.85rem; }
   .import-ok { color: #4ade80; }
@@ -1569,11 +1579,12 @@
 </header>
 
 <div class="cloud-sync">
-  <input type="email" id="cloud-email" placeholder="メールアドレス">
+  <input type="email" id="cloud-email" placeholder="メールアドレス" aria-label="ログイン用メールアドレス" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false">
   <button type="button" id="cloud-login-btn" onclick="cloudLogin()">ログイン</button>
   <button type="button" id="cloud-sync-btn" onclick="cloudSyncNow()">同期</button>
   <button type="button" id="cloud-logout-btn" onclick="cloudLogout()" style="display:none;">ログアウト</button>
   <span class="cloud-status" id="cloud-status">ローカル保存</span>
+  <p id="cloud-login-feedback" class="cloud-login-feedback" role="status" aria-live="polite" hidden></p>
 </div>
 
 <main>
@@ -1816,6 +1827,9 @@ const cloudState = {
   loading: false,
   saveTimer: null,
   authListenerAttached: false,
+  loginSending: false,
+  loginRetryAt: 0,
+  loginTimer: null,
 };
 
 function getCloudConfig() {
@@ -1844,7 +1858,60 @@ function updateCloudUI() {
   }
   if (loginBtn) loginBtn.style.display = loggedIn ? 'none' : '';
   if (logoutBtn) logoutBtn.style.display = loggedIn ? '' : 'none';
+  if (loggedIn) setLoginFeedback('');
+  updateLoginButton();
   updateStickyOffset();
+}
+
+function setLoginFeedback(message, isError = false) {
+  const feedback = document.getElementById('cloud-login-feedback');
+  feedback.textContent = message;
+  feedback.hidden = !message;
+  feedback.dataset.error = String(isError);
+}
+
+function updateLoginButton() {
+  const button = document.getElementById('cloud-login-btn');
+  const seconds = Math.max(0, Math.ceil((cloudState.loginRetryAt - Date.now()) / 1000));
+  button.disabled = cloudState.loginSending || seconds > 0;
+  button.textContent = cloudState.loginSending ? '送信中...' : seconds ? `再送まで${seconds}秒` : 'ログイン';
+  if (!seconds && cloudState.loginTimer) {
+    clearInterval(cloudState.loginTimer);
+    cloudState.loginTimer = null;
+  }
+}
+
+function delayLoginRetry() {
+  cloudState.loginRetryAt = Date.now() + 60000;
+  clearInterval(cloudState.loginTimer);
+  cloudState.loginTimer = setInterval(updateLoginButton, 1000);
+}
+
+function loginErrorMessage(error) {
+  const code = error.code || '';
+  const message = error.message || '';
+  if (code === 'over_email_send_rate_limit') {
+    return 'Supabaseのメール送信上限に達しました。時間をおいて再度お試しください。続く場合は管理画面のメール送信設定を確認してください。';
+  }
+  if (code === 'over_request_rate_limit' || error.status === 429) {
+    return 'ログインの試行回数が多すぎます。少なくとも60秒待ってから再度お試しください。';
+  }
+  if (code === 'email_address_not_authorized') {
+    return 'このメールアドレスへの送信がSupabaseで制限されています。以前ログインできたアドレスを使うか、管理画面のメール送信設定を確認してください。';
+  }
+  if (code === 'email_address_invalid' || code === 'validation_failed') {
+    return 'メールアドレスの形式を確認してください。';
+  }
+  if (code === 'email_provider_disabled' || code === 'otp_disabled') {
+    return 'Supabaseでメールログインが無効になっています。管理画面の認証設定を確認してください。';
+  }
+  if (error.name === 'AuthRetryableFetchError' || /fetch|network|load failed|import.*module/i.test(message)) {
+    return '認証サーバーに接続できません。通信環境とSupabaseプロジェクトの稼働状態を確認してください。停止中の場合は管理画面から再開が必要です。';
+  }
+  if (error.status >= 500) {
+    return 'Supabaseの認証・メール送信サーバーでエラーが発生しました。時間をおいて再度お試しください。';
+  }
+  return `ログインメールを送信できませんでした。${code ? `（${code}）` : ''} ${message || '時間をおいて再度お試しください。'}`;
 }
 
 function updateStickyOffset() {
@@ -1955,31 +2022,47 @@ function queueCloudSave() {
 }
 
 async function cloudLogin() {
-  const client = await ensureCloudClient();
-  if (!client) {
-    showToast('Supabase設定がまだありません');
+  if (cloudState.loginSending || Date.now() < cloudState.loginRetryAt) return;
+  const input = document.getElementById('cloud-email');
+  const email = input.value.trim();
+  input.value = email;
+  if (!email || !input.checkValidity()) {
+    setLoginFeedback('正しいメールアドレスを入力してください。', true);
+    input.focus();
     return;
   }
-
-  const email = document.getElementById('cloud-email').value.trim();
-  if (!email) {
-    showToast('メールアドレスを入力してください');
-    return;
+  cloudState.loginSending = true;
+  updateLoginButton();
+  setLoginFeedback('');
+  try {
+    const client = await ensureCloudClient();
+    if (!client) {
+      setLoginFeedback('Supabase設定がまだありません。', true);
+      return;
+    }
+    const redirect = new URL(location.href);
+    redirect.search = '';
+    redirect.hash = '';
+    if (redirect.pathname.endsWith('/index.html')) {
+      redirect.pathname = redirect.pathname.slice(0, -10);
+    }
+    const { error } = await client.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirect.href },
+    });
+    if (error) throw error;
+    delayLoginRetry();
+    setCloudStatus('メール確認');
+    setLoginFeedback('ログインメールを送信しました。このスマホのブラウザでメール内のリンクを開いてください。');
+    showToast('ログインメールを確認してください');
+  } catch (error) {
+    if (error.status === 429 || error.code === 'over_email_send_rate_limit' || error.code === 'over_request_rate_limit') delayLoginRetry();
+    setCloudStatus('ログインエラー');
+    setLoginFeedback(loginErrorMessage(error), true);
+  } finally {
+    cloudState.loginSending = false;
+    updateLoginButton();
   }
-
-  const { error } = await client.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: location.href.split('#')[0] },
-  });
-
-  if (error) {
-    console.error(error);
-    showToast('ログインメールの送信に失敗しました');
-    return;
-  }
-
-  setCloudStatus('メール確認');
-  showToast('ログインメールを確認してください');
 }
 
 async function cloudLogout() {
